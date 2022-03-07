@@ -2,11 +2,11 @@
 function demo_compare_SPCA()
     clear;
     close all;
-    addpath("misc")
-    addpath("SSN_subproblem")
-    addpath("")
-    addpath("util")
-    addpath("algorithm")
+    addpath("../misc")
+    addpath("../SSN_subproblem")
+    addpath("../")
+    addpath("../util")
+    addpath("../algorithm")
     % addpath (genpath('../manopt'));
 
     % save_root = strcat('../results/spca/');
@@ -35,7 +35,7 @@ function demo_compare_SPCA()
     %% problem setting
 
     rng(1000);
-    test_num = 5;
+    test_num = 5; % number of tests for each parameter set
     table_str = '';
 
     %% cycle
