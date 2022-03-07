@@ -22,21 +22,20 @@ function demo_compare_SPCA()
         mkdir(save_root_res);
     end
 
-    %n_set=[ 200; 300; 500; ]; %dimension
-    n_set = [200; 300; 500; 1000]; %dimension
-    %n_set = 500;
     %format long
-    r_set = [10; 20; 30; 50]; % rank
-    %r_set = [5;8;10;12;15];   % rank
-    %r_set = 5;
-
-    mu_set = [0.4; 0.6; 0.8];
-    %mu_set = [0.5;0.6;0.7;0.8];
-    %mu_set = 0.5;
+    % n_set = [200; 300; 500; 1000]; %dimension
+    n_set = 100;
+    % r_set = [10; 20; 30; 50]; % rank
+    % r_set = [5;8;10;12;15];   % rank
+    r_set = 5;
+    % mu_set = [0.4; 0.6; 0.8];
+    % mu_set = [0.5;0.6;0.7;0.8];
+    mu_set = 0.5;
 
     %% problem setting
 
-    rng(1000); test_num = 5;
+    rng(1000);
+    test_num = 5;
     table_str = '';
 
     %% cycle
@@ -63,22 +62,24 @@ function demo_compare_SPCA()
 
                 for test_random = 1:test_num %times average.
 
-                    %rng('shuffle');
+                    % Generate problem matrix
                     m = 50;
                     B = randn(m, n);
                     B = B - repmat(mean(B, 1), m, 1);
                     B = normc(B);
-                    %B = B/sqrt(norm(B'*B,'fro'));
-
+                    % B = B/sqrt(norm(B'*B,'fro'));
                     AtA = B' * B;
                     type = 1;
 
-                    [phi_init, ~] = svd(randn(n, r), 0); % random intialization
+                    % Random intialization
+                    [phi_init, ~] = svd(randn(n, r), 0);
 
+                    % Rsub parameters
                     option_Rsub.F_mialm = -1e10;
                     option_Rsub.phi_init = phi_init; option_Rsub.maxiter = 5e1; option_Rsub.tol = 5e-3;
                     option_Rsub.r = r; option_Rsub.n = n; option_Rsub.mu = lambda; option_Rsub.type = type;
 
+                    % Use the point returned by the Rsub as the real init point
                     [phi_init] = Re_sub_spca(AtA, option_Rsub);
 
                     A = struct();
@@ -90,13 +91,14 @@ function demo_compare_SPCA()
                     f.data = {AtA};
 
                     h = struct();
-                    h.cost = @(X, lambda) lambda * sum(sum(abs(X)));
-                    h.prox = @(X, nu, lambda) max(abs(X) - nu * lambda, 0) .* sign(X);
+                    h.cost = @(X, lambda) lambda * sum(sum(abs(X))); % weighted l1 norm
+                    h.prox = @(X, nu, lambda) max(abs(X) - nu * lambda, 0) .* sign(X); % soft-threshold operator
                     h.data = {lambda};
 
                     manifold = stiefelfactory(n, r);
 
-                    %options_mialm.alpha = 1/(2*abs(eigs(full(AtA),1)));
+                    % MIALM parameters
+                    % options_mialm.alpha = 1/(2*abs(eigs(full(AtA),1)));
                     options_mialm.verbosity = 0;
                     options_mialm.max_iter = 1000; options_mialm.tol = 1e-8 * n * r;
                     options_mialm.rho = 1.05; options_mialm.tau = 0.8;
@@ -106,11 +108,14 @@ function demo_compare_SPCA()
                     options_mialm.maxitersub = 10; options_mialm.extra_iter = 10;
                     options_mialm.verbosity = 1;
 
+                    % Solve the problem
                     [X_mialm, Z_mialm, out_mialm] = mialm(A, manifold, f, h, options_mialm);
 
+                    % record the output
                     ret_mialm(test_random, :) = [out_mialm.obj, out_mialm.sparsity, out_mialm.time, out_mialm.iter, out_mialm.sub_iter, ...
                                                 out_mialm.deltak, out_mialm.etaD, out_mialm.etaC, out_mialm.nrmG];
 
+                    % MADMM parameters
                     options_admm = options_mialm;
                     options_admm.max_iter = 20000; options_admm.opt = out_mialm.obj;
                     options_admm.maxitersub = 100; %options_admm.nu0 = 40;
@@ -121,7 +126,7 @@ function demo_compare_SPCA()
                     ret_madmm(test_random, :) = [out_madmm.obj, out_madmm.sparsity, out_madmm.time, out_madmm.iter, out_madmm.sub_iter, ...
                                                 out_madmm.deltak, out_madmm.etaD, out_madmm.etaC, out_madmm.nrmG];
 
-                    %%%%%  manpg parameter
+                    % ManPG parameters
                     option_manpg.opt = out_mialm.obj;
                     option_manpg.adap = 0; option_manpg.type = type;
                     option_manpg.phi_init = phi_init; option_manpg.maxiter = 20000; option_manpg.tol = 1e-8 * n * r;
@@ -141,7 +146,7 @@ function demo_compare_SPCA()
                     ret_manpg_BB(test_random, :) = [F_manpg_BB, sparsity_manpg_BB, time_manpg_BB, maxit_att_manpg_BB, ...
                                                     succ_flag_manpg_BB, lins_adap_manpg, in_av_adap_manpg];
 
-                    %%%%%% Riemannian subgradient parameter
+                    % Riemannian subgradient parameter
                     option_Rsub.F_manpg = out_mialm.obj;
                     option_Rsub.phi_init = phi_init; option_Rsub.maxiter = 2e4; option_Rsub.tol = 5e-3;
                     option_Rsub.r = r; option_Rsub.n = n; option_Rsub.mu = lambda; option_Rsub.type = type;
@@ -150,7 +155,7 @@ function demo_compare_SPCA()
                             maxit_att_Rsub, succ_flag_sub, ~, ~] = Re_sub_spca(AtA, option_Rsub);
                     ret_Rsub(test_random, :) = [F_Rsub, sparsity_Rsub, time_Rsub, maxit_att_Rsub, succ_flag_sub];
 
-                    %%%%%% soc parameter
+                    % SOC parameters
                     option_soc.phi_init = phi_init; option_soc.maxiter = 20000; option_soc.tol = 5e-10 * n * r;
                     option_soc.r = r; option_soc.n = n; option_soc.mu = lambda;
                     %option_soc.L= L;
@@ -162,9 +167,9 @@ function demo_compare_SPCA()
                             soc_error_XPQ, maxit_att_soc, succ_flag_SOC] = soc_spca(AtA, option_soc);
 
                     ret_Soc(test_random, :) = [F_soc, sparsity_soc, time_soc, maxit_att_soc, ...
-                                            succ_flag_SOC, soc_error_XPQ];
+                                                succ_flag_SOC, soc_error_XPQ];
 
-                    %%%%%% PAMAL parameter
+                    % PAMAL parameters
                     option_PAMAL.phi_init = phi_init; option_PAMAL.maxiter = 2000; option_PAMAL.tol = 1e-10 * n * r;
                     %option_PAMAL.L = L;   option_PAMAL.V = V;
                     option_PAMAL.r = r; option_PAMAL.n = n; option_PAMAL.mu = lambda; option_PAMAL.type = type;
