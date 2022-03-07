@@ -1,12 +1,12 @@
-%function compare_spca
+% function compare_spca
 function demo_compare_SPCA()
     clear;
     close all;
-    addpath . ./ misc
-    addpath . ./ SSN_subproblem
-    addpath . ./
-    addpath . ./ util
-    addpath . ./ algorithm
+    addpath("misc")
+    addpath("SSN_subproblem")
+    addpath("")
+    addpath("util")
+    addpath("algorithm")
     % addpath (genpath('../manopt'));
 
     % save_root = strcat('../results/spca/');
@@ -41,7 +41,7 @@ function demo_compare_SPCA()
     %% cycle
     for id_n = 1:size(n_set, 1) % n  dimension
 
-        for id_r = 2:size(r_set, 1) % r  number of column
+        for id_r = 1:size(r_set, 1) % r  number of column
 
             for id_mu = 1:size(mu_set, 1) % mu  sparse parameter
                 r = r_set(id_r);
@@ -192,7 +192,8 @@ function demo_compare_SPCA()
                 ret_pamal = sum(ret_pamal) / max(1, pamal_sum);
                 ret_Rsub = sum(ret_Rsub) / max(1, Rsub_sum);
 
-                time_best = min([out_mialm.time, out_madmm.time, time_manpg, time_manpg_BB, time_soc, time_pamal, time_Rsub]);
+                % time_best = min([out_mialm.time, out_madmm.time, time_manpg, time_manpg_BB, time_soc, time_pamal, time_Rsub]);
+                time_best = out_mialm.time;
 
                 if out_mialm.time == time_best
                     time_s = sprintf('\\textbf{%0.2f}', time_best);
@@ -200,13 +201,15 @@ function demo_compare_SPCA()
                     time_s = sprintf('%0.2f', time_best);
                 end
 
-                save_path = strcat(save_root_res, basename, '.mat');
-                save(save_path, 'ret_mialm', 'ret_madmm', 'ret_manpg', 'ret_manpg_BB', 'ret_Soc', 'ret_pamal', 'ret_Rsub', ...
-                    'X_mialm', 'X_madmm', 'Z_mialm', 'Z_madmm', 'X_manpg', 'X_manpg_BB', 'X_Rsub', 'X_Soc', 'X_pamal', 'n', 'r', 'lambda');
+                % save_path = strcat(save_root_res, basename, '.mat');
+                % save(save_path, 'ret_mialm', 'ret_madmm', 'ret_manpg', 'ret_manpg_BB', 'ret_Soc', 'ret_pamal', 'ret_Rsub', ...
+                %     'X_mialm', 'X_madmm', 'Z_mialm', 'Z_madmm', 'X_manpg', 'X_manpg_BB', 'X_Rsub', 'X_Soc', 'X_pamal', 'n', 'r', 'lambda');
 
                 table_str = [table_str basename];
-                table_str = [table_str sprintf('& %.3e & %.3e & %.3e & %.3e & %.3e & %.3e & %.3e & %s & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f', ...
-                            out_mialm.obj, out_madmm.obj, F_manpg, F_manpg_BB, F_soc, F_pamal, F_Rsub, time_s, out_madmm.time, time_manpg, time_manpg_BB, time_soc, time_pamal, time_Rsub)];
+                % table_str = [table_str sprintf('& %.3e & %.3e & %.3e & %.3e & %.3e & %.3e & %.3e & %s & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f', ...
+                %             out_mialm.obj, out_madmm.obj, F_manpg, F_manpg_BB, F_soc, F_pamal, F_Rsub, time_s, out_madmm.time, time_manpg, time_manpg_BB, time_soc, time_pamal, time_Rsub)];
+                table_str = [table_str sprintf('& %.3e & %s', ...
+                            out_mialm.obj, time_s)];
                 table_str = [table_str '\\ \hline' newline];
             end
 
